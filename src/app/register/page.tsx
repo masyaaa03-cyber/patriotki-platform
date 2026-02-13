@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { REGIONS, getCitiesByRegion, findCity } from "@/lib/cities";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,21 @@ export default function RegisterPage() {
   const [step, setStep] = useState<"auth" | "profile">("auth");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [checking, setChecking] = useState(true);
+
+  // Проверяем, залогинен ли пользователь уже
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Пользователь уже залогинен — сразу показываем форму профиля
+        setForm((prev) => ({ ...prev, email: user.email || "" }));
+        setStep("profile");
+      }
+      setChecking(false);
+    };
+    checkSession();
+  }, []);
 
   const cities = form.region ? getCitiesByRegion(form.region) : [];
 
@@ -88,6 +103,14 @@ export default function RegisterPage() {
 
     router.push("/dashboard");
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-500">Загрузка...</p>
+      </div>
+    );
+  }
 
   if (step === "auth") {
     return (
