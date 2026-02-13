@@ -70,38 +70,43 @@ export default function RegisterPage() {
     setLoading(true);
     setError("");
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Ошибка авторизации. Попробуйте снова.");
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setError("Сессия истекла. Перейдите на страницу входа и войдите заново.");
+        setLoading(false);
+        return;
+      }
+
+      const cityData = findCity(form.city);
+      const { error: dbError } = await supabase.from("profiles").insert({
+        id: user.id,
+        full_name: form.full_name,
+        phone: form.phone || null,
+        email: form.email || null,
+        telegram: form.telegram || null,
+        vk: form.vk || null,
+        region: form.region,
+        city: form.city,
+        latitude: cityData?.lat || null,
+        longitude: cityData?.lng || null,
+        consent: true,
+        consent_date: new Date().toISOString(),
+      });
+
+      if (dbError) {
+        setError("Ошибка сохранения: " + dbError.message);
+        setLoading(false);
+        return;
+      }
+
+      window.location.href = "/dashboard";
+    } catch (err) {
+      setError("Ошибка соединения с сервером. Попробуйте ещё раз.");
       setLoading(false);
-      return;
     }
-
-    const cityData = findCity(form.city);
-    const { error: dbError } = await supabase.from("profiles").insert({
-      id: user.id,
-      full_name: form.full_name,
-      phone: form.phone || null,
-      email: form.email || null,
-      telegram: form.telegram || null,
-      vk: form.vk || null,
-      region: form.region,
-      city: form.city,
-      latitude: cityData?.lat || null,
-      longitude: cityData?.lng || null,
-      consent: true,
-      consent_date: new Date().toISOString(),
-    });
-
-    if (dbError) {
-      setError(dbError.message);
-      setLoading(false);
-      return;
-    }
-
-    window.location.href = "/dashboard";
   };
 
   if (checking) {
