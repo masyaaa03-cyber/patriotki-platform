@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { REGIONS, getCitiesByRegion, findCity } from "@/lib/cities";
-import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [form, setForm] = useState({
     full_name: "",
     phone: "",
@@ -22,23 +20,15 @@ export default function RegisterPage() {
   const [step, setStep] = useState<"auth" | "profile">("auth");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
-  const [checking, setChecking] = useState(true);
 
-  // Проверяем, залогинен ли пользователь уже
+  // Если пользователь уже залогинен — переключаем на профиль
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setForm((prev) => ({ ...prev, email: user.email || "" }));
-          setStep("profile");
-        }
-      } catch {
-        // Не залогинен — показываем форму регистрации
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setForm((prev) => ({ ...prev, email: user.email || "" }));
+        setStep("profile");
       }
-      setChecking(false);
-    };
-    checkSession();
+    }).catch(() => {});
   }, []);
 
   const cities = form.region ? getCitiesByRegion(form.region) : [];
@@ -111,14 +101,6 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-
-  if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-500">Загрузка...</p>
-      </div>
-    );
-  }
 
   if (step === "auth") {
     return (
