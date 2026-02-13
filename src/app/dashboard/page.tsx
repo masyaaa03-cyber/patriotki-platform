@@ -16,29 +16,33 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = "/login";
+          return;
+        }
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
 
-      if (!data) {
-        router.push("/register");
-        return;
+        if (error || !data) {
+          window.location.href = "/register";
+          return;
+        }
+        setProfile(data);
+        setForm(data);
+        setLoading(false);
+      } catch {
+        window.location.href = "/login";
       }
-      setProfile(data);
-      setForm(data);
-      setLoading(false);
     }
     load();
-  }, [router]);
+  }, []);
 
   const handleSave = async () => {
     if (!profile) return;
