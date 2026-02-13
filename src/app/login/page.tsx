@@ -48,9 +48,9 @@ export default function LoginPage() {
         .single();
 
       if (profile) {
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       } else {
-        router.push("/register");
+        window.location.href = "/register";
       }
     } catch (err) {
       setError("Ошибка подключения к серверу. Попробуйте позже.");

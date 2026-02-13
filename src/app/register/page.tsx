@@ -101,7 +101,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/dashboard");
+    window.location.href = "/dashboard";
   };
 
   if (checking) {
