@@ -16,27 +16,35 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError(authError.message === "Invalid login credentials"
-        ? "Неверный email или пароль"
-        : authError.message
-      );
-      setLoading(false);
-      return;
-    }
+      if (authError) {
+        if (authError.message === "Invalid login credentials") {
+          setError("Неверный email или пароль");
+        } else if (authError.message === "Email not confirmed") {
+          setError("Email не подтверждён. Проверьте почту или зарегистрируйтесь заново.");
+        } else {
+          setError(authError.message);
+        }
+        setLoading(false);
+        return;
+      }
 
-    // Проверяем есть ли профиль
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+      if (!data.user) {
+        setError("Не удалось получить данные пользователя");
+        setLoading(false);
+        return;
+      }
+
+      // Проверяем есть ли профиль
       const { data: profile } = await supabase
         .from("profiles")
         .select("id")
-        .eq("id", user.id)
+        .eq("id", data.user.id)
         .single();
 
       if (profile) {
@@ -44,6 +52,9 @@ export default function LoginPage() {
       } else {
         router.push("/register");
       }
+    } catch (err) {
+      setError("Ошибка подключения к серверу. Попробуйте позже.");
+      setLoading(false);
     }
   };
 
