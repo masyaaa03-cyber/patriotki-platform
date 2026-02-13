@@ -27,11 +27,14 @@ export default function RegisterPage() {
   // Проверяем, залогинен ли пользователь уже
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Пользователь уже залогинен — сразу показываем форму профиля
-        setForm((prev) => ({ ...prev, email: user.email || "" }));
-        setStep("profile");
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setForm((prev) => ({ ...prev, email: user.email || "" }));
+          setStep("profile");
+        }
+      } catch {
+        // Не залогинен — показываем форму регистрации
       }
       setChecking(false);
     };
